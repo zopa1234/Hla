@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Track Siamna</title>
+<style>
+* { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+body {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #f0f0f0;
+  margin: 0;
+  padding: 15px;
+  min-height: 100vh;
+}
+.container { max-width: 700px; margin: 0 auto; }
+h1 { text-align: center; font-size: 1.5em; margin-bottom: 5px; color: #ffd700; }
+.subtitle { text-align: center; font-size: 0.9em; color: #aaa; margin-bottom: 20px; }
+
+.login-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.login-box {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+.login-box h2 { color: #ffd700; margin-top: 0; }
+.login-box p { color: #aaa; font-size: 0.9em; margin-bottom: 20px; }
+.login-box input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #0f0f23;
+  color: #fff;
+  font-size: 1em;
+  margin-bottom: 12px;
+}
+.login-box button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #27ae60;
+  color: white;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.login-box button:hover { opacity: 0.9; }
+.login-box button:disabled { background: #555; cursor: wait; }
+
+.spinner {
+  display: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.spinner.show { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.login-error { color: #e74c3c; margin-top: 10px; font-size: 0.9em; min-height: 20px; }
+.login-hint { color: #666; font-size: 0.75em; margin-top: 15px; }
+
+.control-group {
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.95em; }
+input[type="text"], input[type="number"], select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #0f0f23;
+  color: #fff;
+  font-size: 1em;
+}
+input::placeholder { color: #666; }
+
+.voice-box { margin-bottom: 10px; }
+.voice-label { display: inline-block; width: 90px; font-weight: bold; }
+.voice-label.sop { color: #ff6b6b; }
+.voice-label.alt { color: #4ecdc4; }
+.voice-label.ten { color: #45b7d1; }
+.voice-label.bas { color: #96ceb4; }
+
+.btn-row { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+button {
+  flex: 1;
+  min-width: 80px;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+button:hover { opacity: 0.85; }
+.btn-play { background: #27ae60; color: white; }
+.btn-stop { background: #c0392b; color: white; }
+.btn-save { background: #2980b9; color: white; }
+.btn-auto { background: #9b59b6; color: white; }
+.btn-clear { background: #7f8c8d; color: white; }
+.btn-about { background: #f39c12; color: white; }
+.btn-logout { background: #e67e22; color: white; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.status {
+  text-align: center;
+  padding: 12px;
+  margin-top: 15px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  font-weight: bold;
+  min-height: 24px;
+}
+.info {
+  margin-top: 15px;
+  font-size: 0.85em;
+  color: #888;
+  text-align: center;
+  line-height: 1.4;
+}
+.preset-row { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
+.preset-btn {
+  background: rgba(255,215,0,0.15);
+  color: #ffd700;
+  border: 1px solid #ffd700;
+  padding: 6px 12px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+.preset-btn:hover { background: rgba(255,215,0,0.3); }
+
+.about-panel {
+  display: none;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 15px;
+  animation: fadeIn 0.3s ease;
+}
+.about-panel.show { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+.about-panel h3 { color: #ffd700; margin-top: 0; font-size: 1.2em; }
+.about-panel h4 { color: #4ecdc4; margin-bottom: 5px; font-size: 1em; }
+.about-panel p, .about-panel li { color: #ddd; font-size: 0.9em; line-height: 1.5; }
+.about-panel ul { padding-left: 20px; margin: 8px 0; }
+.about-panel .close-btn {
+  float: right;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+.about-panel .close-btn:hover { background: rgba(255,255,255,0.2); }
+.version-tag {
+  display: inline-block;
+  background: rgba(255,215,0,0.2);
+  color: #ffd700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  margin-left: 8px;
+}
+.hidden { display: none !important; }
+.user-tag {
+  text-align: center;
+  color: #4ecdc4;
+  font-size: 0.9em;
+  margin-bottom: 10px;
+}
+
+.key-select {
+  background: #0f0f23;
+  color: #ffd700;
+  border: 1px solid #ffd700;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 1em;
+  cursor: pointer;
+}
+</style>
+<base target="_blank">
+<base target="_blank">
+</head>
+<body>
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h2>🔐 Track Siamna Login</h2>
+    <p>Email leh password.</p>
+    <input type="email" id="loginEmail" placeholder="your.email@gmail.com">
+    <input type="password" id="loginPassword" placeholder="Enter password...">
+    <button id="loginBtn" onclick="doLogin()">
+      <span class="spinner" id="loginSpinner"></span>
+      <span id="loginBtnText">SIGN IN</span>
+    </button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-hint">Contact 6909715286 David Sailo.</div>
+  </div>
+</div>
+
+<div class="container hidden" id="mainApp">
+  <div class="user-tag" id="userTag">Welcome!</div>
+  <h1>🎵 Track Siamna</h1>
+  <div class="subtitle">Version 2 — Full Band | Key Select | Dot Input | Duration</div>
+
+  <div class="control-group">
+    <label>Tempo (BPM)</label>
+    <input type="number" id="tempo" value="90" min="40" max="200">
+  </div>
+
+  <div class="control-group">
+    <label>Key</label>
+    <select id="keySelect" class="key-select" onchange="updateKey()">
+      <option value="C">C Major (Do)</option>
+      <option value="G">G Major (Sol)</option>
+      <option value="F">F Major (Fa)</option>
+      <option value="D">D Major (Re)</option>
+    </select>
+  </div>
+
+  <div class="control-group">
+    <label>Solfa Voices (a in karah dot leh hawrawp tein, half note chu bracket in)</label>
+    <div class="voice-box">
+      <span class="voice-label sop">SOPRANO</span>
+      <input type="text" id="sop" placeholder="do.re.mi(2).fa.sol(0.5).fa.mi.re.do">
+    </div>
+    <div class="voice-box">
+      <span class="voice-label alt">ALTO</span>
+      <input type="text" id="alt" placeholder="Auto Harmonize click rawh">
+    </div>
+    <div class="voice-box">
+      <span class="voice-label ten">TENOR</span>
+      <input type="text" id="ten" placeholder="Auto Harmonize click rawh">
+    </div>
+    <div class="voice-box">
+      <span class="voice-label bas">BASS</span>
+      <input type="text" id="bas" placeholder="Auto Harmonize click rawh">
+    </div>
+    <div class="preset-row">
+      <span style="color:#888;font-size:0.85em;width:100%;margin-bottom:4px;">Presets:</span>
+      <button class="preset-btn" onclick="loadPreset('scale')">Scale</button>
+      <button class="preset-btn" onclick="loadPreset('hymn')">Hymn</button>
+      <button class="preset-btn" onclick="loadPreset('joy')">Joyful</button>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-play" id="btnPlay" onclick="playMusic()">▶ PLAY</button>
+    <button class="btn-stop" id="btnStop" onclick="stopMusic()" disabled>⏹ STOP</button>
+    <button class="btn-auto" onclick="autoHarmonize()">🎹 AUTO</button>
+    <button class="btn-clear" onclick="clearAll()">🗑 CLEAR</button>
+    <button class="btn-save" onclick="saveNotes()">⬇ SAVE</button>
+    <button class="btn-about" onclick="toggleAbout()">ℹ ABOUT</button>
+    <button class="btn-logout" onclick="logout()">🔒 LOGOUT</button>
+  </div>
+
+  <div class="status" id="status">Ready — Soprano type rawh, AUTO HARMONIZE click la, PLAY press rawh</div>
+
+  <div class="about-panel" id="aboutPanel">
+    <button class="close-btn" onclick="toggleAbout()">✕ Khar</button>
+    <h3>🎵 Track Siamna <span class="version-tag">v2.0</span></h3>
+    <p>Full band music generator - Piano, Bass, Drums.</p>
+
+    <h4>🎹 Hman Dan</h4>
+    <ul>
+      <li><b>A solfa chhulut rawh</b> Soprano-ah: do.re.mi.fa.sol.la.ti</li>
+      <li><b>Dot (.)</b> a inkarah hmang rawh</li>
+      <li><b>Duration</b> bracket-ah: do(2) = half note, re(0.5) = eighth note, mi = quarter note</li>
+      <li><b>AUTO HARMONIZE</b> click rawh — Alto, Tenor, Bass a inziak dawn</li>
+      <li><b>Key</b> thlan theih: C, G, F, D Major</li>
+      <li><b>Tempo</b> 40-200 BPM</li>
+      <li><b>PLAY</b> click rawh</li>
+    </ul>
+
+    <h4>🎼 Auto-Harmonize Rules</h4>
+    <ul>
+      <li><b>do</b> → I chord</li>
+      <li><b>re</b> → ii chord</li>
+      <li><b>mi</b> → I chord</li>
+      <li><b>fa</b> → IV chord</li>
+      <li><b>sol</b> → V chord</li>
+      <li><b>la</b> → vi chord</li>
+      <li><b>ti</b> → V chord</li>
+    </ul>
+
+    <h4>⚙️ Technical</h4>
+    <ul>
+      <li><b>Key:</b> C/G/F/D Major</li>
+      <li><b>Time:</b> 4/4</li>
+      <li><b>Instruments:</b> Piano + Bass + Drums</li>
+    </ul>
+
+    <h4>🆓 David Sailo</h4>
+    <p>Contact 6909715286.</p>
+  </div>
+
+  <div class="info">
+    Key: <span id="displayKey">C</span> Major | Time: 4/4 | Piano + Bass + Drums<br>
+    Notes: do.re.mi.fa.sol.la.ti | Duration: do(2).re(0.5).mi<br>
+    a in karah dot leh hawrawp tein, half note chu bracket in  </div>
+</div>
+
+<script>
+// ==================== VARIABLES (TOP) ====================
+let isPlaying = false;
+let audioCtx = null;
+let currentSong = null;
+let currentUser = null;
+let currentKey = "C";
+
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5zYiosRlB4aHtq4N69fMUQNa09fY9mUqpBlPummZc6zW7bSWMG2u8PTxpOsfxfqY8/exec";
+
+// ==================== KEY MAPS ====================
+const KEY_MAPS = {
+  "C": {
+    name: "C Major",
+    notes: { 'do':0, 're':2, 'mi':4, 'fa':5, 'sol':7, 'la':9, 'ti':11 },
+    baseFreq: 261.63
+  },
+  "G": {
+    name: "G Major",
+    notes: { 'do':7, 're':9, 'mi':11, 'fa':0, 'sol':2, 'la':4, 'ti':6 },
+    baseFreq: 392.00
+  },
+  "F": {
+    name: "F Major",
+    notes: { 'do':5, 're':7, 'mi':9, 'fa':10, 'sol':0, 'la':2, 'ti':4 },
+    baseFreq: 349.23
+  },
+  "D": {
+    name: "D Major",
+    notes: { 'do':2, 're':4, 'mi':6, 'fa':7, 'sol':9, 'la':11, 'ti':1 },
+    baseFreq: 293.66
+  }
+};
+
+function getFreq(note, octaveOffset, key) {
+  const keyData = KEY_MAPS[key] || KEY_MAPS["C"];
+  const semitone = keyData.notes[note];
+  if (semitone === undefined) return null;
+  return keyData.baseFreq * Math.pow(2, semitone / 12) * Math.pow(2, octaveOffset);
+}
+
+function updateKey() {
+  currentKey = document.getElementById("keySelect").value;
+  document.getElementById("displayKey").textContent = currentKey;
+  setStatus("Key change to " + KEY_MAPS[currentKey].name + ". Play rawh.", "#4ecdc4");
+}
+
+// ==================== LOGIN ====================
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errorDiv = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+  const spinner = document.getElementById('loginSpinner');
+  const btnText = document.getElementById('loginBtnText');
+
+  if (!email && !password) {
+    errorDiv.textContent = "❌ Email leh Password dah tel vek rawh.";
+    return;
+  }
+  if (!email) {
+    errorDiv.textContent = "❌ Email dah tel rawh.";
+    return;
+  }
+  if (!password) {
+    errorDiv.textContent = "❌ Password dah tel rawh.";
+    return;
+  }
+  if (!email.includes("@")) {
+    errorDiv.textContent = "❌ Email dik lo. @ tel vek rawh.";
+    return;
+  }
+
+  if (APPS_SCRIPT_URL === "PASTE_YOUR_APPS_SCRIPT_URL_HERE") {
+    errorDiv.textContent = "⚠️ Apps Script URL siam hrih lo. Developer-ah biak rawh.";
+    return;
+  }
+
+  btn.disabled = true;
+  spinner.classList.add('show');
+  btnText.textContent = "Check mek...";
+  errorDiv.textContent = "";
+
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({ email: email, password: password })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error("Network error: " + res.status);
+    return res.json();
+  })
+  .then(data => {
+    btn.disabled = false;
+    spinner.classList.remove('show');
+    btnText.textContent = "SIGN IN";
+
+    if (data.success) {
+      currentUser = { email: email, name: data.name };
+      sessionStorage.setItem('churchUser', JSON.stringify(currentUser));
+      showApp();
+    } else {
+      if (data.message && data.message.includes("Invalid")) {
+        errorDiv.textContent = "❌ Email emaw password a dik lo. En rawh.";
+      } else if (data.message && data.message.includes("not approved")) {
+        errorDiv.textContent = "❌ I account approved a la ni lo. Admin-ah biak rawh.";
+      } else {
+        errorDiv.textContent = "❌ " + (data.message || "Login a hlawhchham.");
+      }
+    }
+  })
+  .catch(err => {
+    btn.disabled = false;
+    spinner.classList.remove('show');
+    btnText.textContent = "SIGN IN";
+
+    if (err.message.includes("Network")) {
+      errorDiv.textContent = "❌ Internet connection en rawh.";
+    } else if (err.message.includes("Failed to fetch")) {
+      errorDiv.textContent = "❌ Apps Script URL a hlawhchham. Developer-ah biak rawh.";
+    } else {
+      errorDiv.textContent = "❌ Thil dik lo a thleng: " + err.message;
+    }
+    console.error(err);
+  });
+}
+
+// FIX: Allow Enter key to submit login form
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('loginEmail').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      document.getElementById('loginPassword').focus();
+    }
+  });
+});
+
+function showApp() {
+  document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('hidden');
+  if (currentUser) {
+    document.getElementById('userTag').textContent = "👤 " + currentUser.name;
+  }
+}
+
+function logout() {
+  sessionStorage.removeItem('churchUser');
+  currentUser = null;
+  document.getElementById('mainApp').classList.add('hidden');
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginError').textContent = '';
+  stopMusic();
+}
+
+const saved = sessionStorage.getItem('churchUser');
+if (saved) {
+  currentUser = JSON.parse(saved);
+  showApp();
+}
+
+// ==================== PARSE NOTES WITH DURATION ====================
+// Format: do.re.mi(2).fa.sol(0.5)
+// Plain note = 1 beat (quarter)
+// (2) = 2 beats (half), (0.5) = 0.5 beat (eighth), (4) = whole
+function parseVoiceWithDuration(str) {
+  if (!str) return [];
+  const notes = [];
+  const tokens = str.toLowerCase().split('.');
+
+  for (let token of tokens) {
+    token = token.trim();
+    if (!token) continue;
+
+    // Match: note name, optional (duration)
+    // do, do(2), do(0.5), re(4)
+    const match = token.match(/^([a-z]+)(\(([0-9.]+)\))?$/);
+    if (match) {
+      const noteName = match[1];
+      const duration = match[3] ? parseFloat(match[3]) : 1;
+      notes.push({ note: noteName, duration: duration });
+    }
+  }
+  return notes;
+}
+
+function validateNotes(notes) {
+  for (let n of notes) {
+    if (!KEY_MAPS[currentKey].notes[n.note]) return n.note;
+  }
+  return null;
+}
+
+// ==================== AUTO HARMONY ====================
+const AUTO_HARMONY = {
+  'do':  { a: 'mi', t: 'sol', b: 'do' },
+  're':  { a: 'fa', t: 'la', b: 're' },
+  'mi':  { a: 'sol', t: 'do', b: 'do' },
+  'fa':  { a: 'la', t: 'do', b: 'fa' },
+  'sol': { a: 'ti', t: 're', b: 'sol' },
+  'la':  { a: 'do', t: 'mi', b: 'la' },
+  'ti':  { a: 're', t: 'sol', b: 'sol' },
+  "do'": { a: 'mi', t: 'sol', b: 'do' }
+};
+
+function autoHarmonize() {
+  const sopNotes = parseVoiceWithDuration(document.getElementById('sop').value);
+
+  if (sopNotes.length === 0) {
+    setStatus('⚠ Soprano notes type hmasa phawt rawh.', 'orange');
+    return;
+  }
+
+  const bad = validateNotes(sopNotes);
+  if (bad) {
+    setStatus('⚠ Note "' + bad + '" a hriat theih lo. do.re.mi.fa.sol.la.ti hmang rawh.', 'orange');
+    return;
+  }
+
+  const alt = [], ten = [], bas = [];
+  for (let item of sopNotes) {
+    const h = AUTO_HARMONY[item.note] || AUTO_HARMONY['do'];
+    const durStr = item.duration !== 1 ? '(' + item.duration + ')' : '';
+    alt.push(h.a + durStr);
+    ten.push(h.t + durStr);
+    bas.push(h.b + durStr);
+  }
+
+  document.getElementById('alt').value = alt.join('.');
+  document.getElementById('ten').value = ten.join('.');
+  document.getElementById('bas').value = bas.join('.');
+
+  setStatus('✓ Auto-harmonize a zo! I duh chuan edit thei.', '#4ecdc4');
+}
+
+// ==================== DRUMS ====================
+function playKick(time, gainNode) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(gainNode);
+  osc.frequency.setValueAtTime(150, time);
+  osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.5);
+  gain.gain.setValueAtTime(0.8, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
+  osc.start(time);
+  osc.stop(time + 0.5);
+}
+
+function playSnare(time, gainNode) {
+  const bufferSize = audioCtx.sampleRate * 0.2;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buffer;
+  const noiseFilter = audioCtx.createBiquadFilter();
+  noiseFilter.type = 'highpass';
+  noiseFilter.frequency.value = 1000;
+  const noiseGain = audioCtx.createGain();
+  noiseGain.gain.setValueAtTime(0.6, time);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+  noise.connect(noiseFilter);
+  noiseFilter.connect(noiseGain);
+  noiseGain.connect(gainNode);
+
+  const osc = audioCtx.createOscillator();
+  const oscGain = audioCtx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.value = 180;
+  oscGain.gain.setValueAtTime(0.4, time);
+  oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+  osc.connect(oscGain);
+  oscGain.connect(gainNode);
+
+  noise.start(time);
+  noise.stop(time + 0.2);
+  osc.start(time);
+  osc.stop(time + 0.1);
+}
+
+function playHiHat(time, gainNode) {
+  const bufferSize = audioCtx.sampleRate * 0.05;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buffer;
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'highpass';
+  filter.frequency.value = 8000;
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.3, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+  noise.connect(filter);
+  filter.connect(gain);
+  gain.connect(gainNode);
+  noise.start(time);
+  noise.stop(time + 0.05);
+}
+
+function playBassNote(freq, start, dur, gainNode) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  const filter = audioCtx.createBiquadFilter();
+  osc.type = 'sawtooth';
+  osc.frequency.value = freq;
+  filter.type = 'lowpass';
+  filter.frequency.value = 800;
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(gainNode);
+  gain.gain.setValueAtTime(0, start);
+  gain.gain.linearRampToValueAtTime(0.25, start + 0.01);
+  gain.gain.setValueAtTime(0.25, start + 0.1);
+  gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+  osc.start(start);
+  osc.stop(start + dur);
+}
+
+// ==================== MAIN PLAY ====================
+function playMusic() {
+  if (isPlaying) stopMusic();
+
+  const bpm = parseInt(document.getElementById('tempo').value) || 90;
+  const beatTime = 60 / bpm;
+
+  const sop = parseVoiceWithDuration(document.getElementById('sop').value);
+  const alt = parseVoiceWithDuration(document.getElementById('alt').value);
+  const ten = parseVoiceWithDuration(document.getElementById('ten').value);
+  const bas = parseVoiceWithDuration(document.getElementById('bas').value);
+
+  const voices = [sop, alt, ten, bas];
+  const lengths = voices.map(v => v.length);
+
+  if (lengths[0] === 0) {
+    setStatus('⚠ Soprano notes type hmasa phawt rawh.', 'orange');
+    return;
+  }
+  if (!lengths.every(l => l === lengths[0])) {
+    setStatus('⚠ Note zat vek a ni tur. Soprano/Alto/Tenor/Bass vek in.', 'orange');
+    return;
+  }
+
+  for (let i = 0; i < 4; i++) {
+    const bad = validateNotes(voices[i]);
+    if (bad) {
+      setStatus('⚠ Note "' + bad + '" a hriat theih lo. Key: ' + currentKey, 'orange');
+      return;
+    }
+  }
+
+  // FIX: Create AudioContext and handle mobile suspended state
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // FIX: Resume AudioContext if suspended (required for mobile browsers)
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+
+  const now = audioCtx.currentTime;
+
+  let totalDuration = 0;
+  for (let item of sop) {
+    totalDuration += item.duration * beatTime;
+  }
+
+  currentSong = { bpm: bpm, key: currentKey, sop: sop, alt: alt, ten: ten, bas: bas, created: new Date().toLocaleString() };
+
+  const masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.9;
+  masterGain.connect(audioCtx.destination);
+
+  // PIANO (SATB)
+  const pianoWaves = ['triangle', 'sawtooth', 'triangle', 'sawtooth'];
+  const pianoVolumes = [0.08, 0.06, 0.06, 0.08];
+  const octaveOffsets = [1, 0, -1, -2];
+
+  for (let v = 0; v < 4; v++) {
+    const voiceNotes = voices[v];
+    let currentTime = now;
+    for (let i = 0; i < voiceNotes.length; i++) {
+      const item = voiceNotes[i];
+      const freq = getFreq(item.note, octaveOffsets[v], currentKey);
+      if (!freq) continue;
+
+      const dur = item.duration * beatTime * 0.85;
+      const start = currentTime;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(masterGain);
+
+      osc.type = pianoWaves[v];
+      osc.frequency.value = freq;
+
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(pianoVolumes[v], start + 0.005);
+      gain.gain.exponentialRampToValueAtTime(pianoVolumes[v] * 0.3, start + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+
+      osc.start(start);
+      osc.stop(start + dur);
+
+      currentTime += item.duration * beatTime;
+    }
+  }
+
+  // BASS GUITAR
+  let bassTime = now;
+  for (let i = 0; i < sop.length; i++) {
+    const item = sop[i];
+    const rootFreq = getFreq(item.note, -2, currentKey);
+    if (rootFreq) {
+      const dur = item.duration * beatTime * 0.9;
+      playBassNote(rootFreq * 0.5, bassTime, dur, masterGain);
+    }
+    bassTime += item.duration * beatTime;
+  }
+
+  // DRUMS
+  let drumTime = now;
+  let beatCount = 0;
+  for (let i = 0; i < sop.length; i++) {
+    const item = sop[i];
+    const noteBeats = item.duration;
+    const noteDuration = noteBeats * beatTime;
+
+    let beatInNote = 0;
+    while (beatInNote < noteBeats) {
+      const beatStart = drumTime + (beatInNote * beatTime);
+      const beatInBar = beatCount % 4;
+
+      if (beatInBar === 0 || beatInBar === 2) {
+        playKick(beatStart, masterGain);
+      }
+      if (beatInBar === 2) {
+        playSnare(beatStart, masterGain);
+      }
+      playHiHat(beatStart, masterGain);
+      playHiHat(beatStart + beatTime * 0.5, masterGain);
+
+      beatCount++;
+      beatInNote++;
+    }
+    drumTime += noteDuration;
+  }
+
+  isPlaying = true;
+  document.getElementById('btnPlay').disabled = true;
+  document.getElementById('btnStop').disabled = false;
+  setStatus('▶ ' + KEY_MAPS[currentKey].name + ' ah ' + sop.length + ' notes, Full Band, ' + bpm + ' BPM...', '#4ecdc4');
+
+  setTimeout(function() { if (isPlaying) stopMusic(); }, totalDuration * 1000 + 200);
+}
+
+function stopMusic() {
+  isPlaying = false;
+  document.getElementById('btnPlay').disabled = false;
+  document.getElementById('btnStop').disabled = true;
+  setStatus('⏹ A tawk. Ready.', '#aaa');
+  if (audioCtx) {
+    try { audioCtx.close(); } catch(e) {}
+    audioCtx = null;
+  }
+}
+
+function setStatus(msg, color) {
+  const s = document.getElementById('status');
+  s.textContent = msg;
+  s.style.color = color || '#f0f0f0';
+}
+
+// ==================== SAVE ====================
+function saveNotes() {
+  if (!currentSong) {
+    setStatus('⚠ Play hmasa phawt rawh, chuan save thei ang.', 'orange');
+    return;
+  }
+
+  function formatNotes(notes) {
+    return notes.map(function(n) { return n.note + (n.duration !== 1 ? '(' + n.duration + ')' : ''); }).join('.');
+  }
+
+  // FIX: Use template literal (backticks) instead of single quotes for multi-line string
+  const text = `Music COMPOSITION
+=======================
+Siam: ${currentSong.created}
+Tempo: ${currentSong.bpm} BPM
+Key: ${KEY_MAPS[currentSong.key].name}
+Vuak: 4/4
+Instruments: Piano + Bass Guitar + Drums
+
+SOPRANO: ${formatNotes(currentSong.sop)}
+ALTO:    ${formatNotes(currentSong.alt)}
+TENOR:   ${formatNotes(currentSong.ten)}
+BASS:    ${formatNotes(currentSong.bas)}
+
+AUTO-HARMONIZE KALPHUNG:
+do  -> I chord  (Alto:mi, Tenor:sol, Bass:do)
+re  -> ii chord (Alto:fa, Tenor:la, Bass:re)
+mi  -> I chord  (Alto:sol, Tenor:do, Bass:do)
+fa  -> IV chord (Alto:la, Tenor:do, Bass:fa)
+sol -> V chord  (Alto:ti, Tenor:re, Bass:sol)
+la  -> vi chord (Alto:do, Tenor:mi, Bass:la)
+ti  -> V chord  (Alto:re, Tenor:sol, Bass:sol)
+
+Hman dan:
+1. MuseScore ah (musescore.org)
+2. ${KEY_MAPS[currentSong.key].name} in
+3. Music Notes ang khian
+4. Tempo chu ${currentSong.bpm} BPM
+5. MP3 emaw print sheet music in
+`;
+
+  const blob = new Blob([text], {type: 'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'TrackSiamna_' + currentSong.key + '_' + Date.now() + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  setStatus('✓ Save a zo! Downloads folder-ah en rawh.', '#27ae60');
+}
+
+// ==================== PRESETS ====================
+const PRESETS = {
+  'scale': {
+    sop: 'do.re.mi.fa.sol.fa.mi.re.do',
+    alt: 'do.mi.do.la.do.la.do.ti.do',
+    ten: 'sol.do.sol.fa.mi.fa.sol.sol.do',
+    bas: 'do.sol.do.fa.do.fa.do.sol.do'
+  },
+  'hymn': {
+    sop: 'sol.do.re.mi.re.do.ti.do',
+    alt: 'do.mi.do.la.do.la.sol.do',
+    ten: 'sol.sol.fa.do.fa.fa.re.sol',
+    bas: 'do.do.fa.fa.do.la.do.sol'
+  },
+  'joy': {
+    sop: 'do.re.mi.sol.sol.la.sol.fa.mi.re.do',
+    alt: 'do.do.mi.mi.do.fa.mi.re.do.ti.do',
+    ten: 'sol.sol.do.do.sol.do.do.sol.sol.sol.do',
+    bas: 'do.sol.do.mi.do.fa.do.sol.do.sol.do'
+  }
+};
+
+function loadPreset(name) {
+  const p = PRESETS[name];
+  if (!p) return;
+  document.getElementById('sop').value = p.sop;
+  document.getElementById('alt').value = p.alt;
+  document.getElementById('ten').value = p.ten;
+  document.getElementById('bas').value = p.bas;
+  setStatus('"' + name + '" preset load a zo. PLAY press rawh.', '#ffd700');
+}
+
+function clearAll() {
+  document.getElementById('sop').value = '';
+  document.getElementById('alt').value = '';
+  document.getElementById('ten').value = '';
+  document.getElementById('bas').value = '';
+  setStatus('Clear a zo. Soprano type rawh.', '#aaa');
+}
+
+function toggleAbout() {
+  const panel = document.getElementById('aboutPanel');
+  panel.classList.toggle('show');
+}
+</script>
+</body>
+</html>
