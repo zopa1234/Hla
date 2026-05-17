@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Track Siamna</title>
 <style>
-* { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+* { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
 body {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   color: #f0f0f0;
@@ -123,9 +123,10 @@ button {
 button:hover { opacity: 0.85; }
 .btn-play { background: #27ae60; color: white; }
 .btn-stop { background: #c0392b; color: white; }
-.btn-save { background: #2980b9; color: white; }
 .btn-auto { background: #9b59b6; color: white; }
 .btn-clear { background: #7f8c8d; color: white; }
+.btn-save { background: #2980b9; color: white; }
+.btn-load { background: #16a085; color: white; }
 .btn-about { background: #f39c12; color: white; }
 .btn-logout { background: #e67e22; color: white; }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -202,7 +203,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   margin-bottom: 10px;
 }
 
-.key-select {
+.key-select, .time-select {
   background: #0f0f23;
   color: #ffd700;
   border: 1px solid #ffd700;
@@ -210,9 +211,89 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   border-radius: 6px;
   font-size: 1em;
   cursor: pointer;
+  width: 100%;
+}
+
+.volume-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.volume-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.volume-row label {
+  min-width: 80px;
+  margin-bottom: 0;
+  font-size: 0.9em;
+  font-weight: normal;
+}
+.volume-row input[type="range"] {
+  flex: 1;
+  accent-color: #ffd700;
+}
+.volume-value {
+  min-width: 40px;
+  text-align: right;
+  font-size: 0.9em;
+  color: #ffd700;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.toggle-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #27ae60;
+  cursor: pointer;
+}
+.toggle-row label {
+  margin-bottom: 0;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.song-list {
+  margin-top: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.song-item {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.song-item span { font-size: 0.9em; }
+.song-item small { color: #888; font-size: 0.8em; }
+.song-actions { display: flex; gap: 5px; }
+.song-actions button {
+  padding: 5px 10px;
+  font-size: 0.8em;
+  min-width: auto;
+}
+.btn-del { background: #c0392b; color: white; }
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 480px) {
+  .two-col { grid-template-columns: 1fr; }
 }
 </style>
-<base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -235,28 +316,102 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 <div class="container hidden" id="mainApp">
   <div class="user-tag" id="userTag">Welcome!</div>
   <h1>🎵 Track Siamna</h1>
-  <div class="subtitle">KA | Siam | Hmasak | Ber</div>
+  <div class="subtitle">Ka Vawikhat siamna</div>
 
   <div class="control-group">
-    <label>Tempo (BPM)</label>
-    <input type="number" id="tempo" value="90" min="40" max="200">
+    <div class="two-col">
+      <div>
+        <label>Tempo (BPM)</label>
+        <input type="number" id="tempo" value="90" min="40" max="200">
+      </div>
+      <div>
+        <label>Time Signature</label>
+        <select id="timeSig" class="time-select">
+          <option value="4/4">4/4 (Common)</option>
+          <option value="3/4">3/4 (Waltz)</option>
+          <option value="6/8">6/8 (Compound)</option>
+        </select>
+      </div>
+    </div>
   </div>
 
   <div class="control-group">
-    <label>Key</label>
-    <select id="keySelect" class="key-select" onchange="updateKey()">
-      <option value="C">C Major (Do)</option>
-      <option value="G">G Major (Sol)</option>
-      <option value="F">F Major (Fa)</option>
-      <option value="D">D Major (Re)</option>
-    </select>
+    <div class="two-col">
+      <div>
+        <label>Key</label>
+        <select id="keySelect" class="key-select" onchange="updateKey()">
+          <optgroup label="Major Keys">
+            <option value="C" selected>C Major (Do)</option>
+            <option value="G">G Major (Sol)</option>
+            <option value="D">D Major (Re)</option>
+            <option value="A">A Major (La)</option>
+            <option value="E">E Major (Mi)</option>
+            <option value="B">B Major (Ti)</option>
+            <option value="F">F Major (Fa)</option>
+            <option value="Bb">B♭ Major (Te)</option>
+            <option value="Eb">E♭ Major (Me)</option>
+            <option value="Ab">A♭ Major (Le)</option>
+          </optgroup>
+          <optgroup label="Minor Keys">
+            <option value="Am">A Minor (La)</option>
+            <option value="Em">E Minor (Mi)</option>
+            <option value="Bm">B Minor (Ti)</option>
+            <option value="F#m">F♯ Minor (Fi)</option>
+            <option value="C#m">C♯ Minor (Di)</option>
+            <option value="G#m">G♯ Minor (Si)</option>
+            <option value="Dm">D Minor (Re)</option>
+            <option value="Gm">G Minor (Sol)</option>
+            <option value="Cm">C Minor (Do)</option>
+            <option value="Fm">F Minor (Fa)</option>
+          </optgroup>
+        </select>
+      </div>
+      <div>
+        <label>Key Display</label>
+        <div id="displayKey" style="color:#ffd700; padding:10px 0; font-weight:bold;">C Major</div>
+      </div>
+    </div>
   </div>
 
   <div class="control-group">
-    <label>Solfa Voices (a in karah dot leh hawrawp tein, half note chu bracket in)</label>
+    <label>🎸 Rhythm Guitar & 🥁 Drums Volume</label>
+    <div class="volume-group">
+      <div class="volume-row">
+        <label>Master</label>
+        <input type="range" id="volMaster" min="0" max="100" value="90">
+        <span class="volume-value" id="valMaster">90%</span>
+      </div>
+      <div class="volume-row">
+        <label>Piano</label>
+        <input type="range" id="volPiano" min="0" max="100" value="80">
+        <span class="volume-value" id="valPiano">80%</span>
+      </div>
+      <div class="volume-row">
+        <label>Guitar</label>
+        <input type="range" id="volGuitar" min="0" max="100" value="70">
+        <span class="volume-value" id="valGuitar">70%</span>
+      </div>
+      <div class="volume-row">
+        <label>Drums</label>
+        <input type="range" id="volDrums" min="0" max="100" value="60">
+        <span class="volume-value" id="valDrums">60%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="toggle-row">
+      <input type="checkbox" id="introToggle" checked>
+      <label for="introToggle">Play 2-Bar Piano Intro before song</label>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label>Solfa Voices (dot between notes, duration in brackets: do(2).re(0.5))</label>
+    <div style="font-size:0.8em; color:#888; margin-bottom:8px;">Chromatic notes: di, ri, fi, si, li, se, te, ta, ra, me, le</div>
     <div class="voice-box">
       <span class="voice-label sop">SOPRANO</span>
-      <input type="text" id="sop" placeholder="do.re.mi(2).fa.sol(0.5).fa.mi.re.do">
+      <input type="text" id="sop" placeholder="do.re.me(2).fa.sol(0.5).fa.me.re.do">
     </div>
     <div class="voice-box">
       <span class="voice-label alt">ALTO</span>
@@ -275,6 +430,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
       <button class="preset-btn" onclick="loadPreset('scale')">Scale</button>
       <button class="preset-btn" onclick="loadPreset('hymn')">Hymn</button>
       <button class="preset-btn" onclick="loadPreset('joy')">Joyful</button>
+      <button class="preset-btn" onclick="loadPreset('minor')">A Minor</button>
     </div>
   </div>
 
@@ -283,45 +439,69 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
     <button class="btn-stop" id="btnStop" onclick="stopMusic()" disabled>⏹ STOP</button>
     <button class="btn-auto" onclick="autoHarmonize()">🎹 AUTO</button>
     <button class="btn-clear" onclick="clearAll()">🗑 CLEAR</button>
-    <button class="btn-save" onclick="saveNotes()">⬇ SAVE</button>
+    <button class="btn-save" onclick="saveSong()">💾 SAVE</button>
+    <button class="btn-load" onclick="showSongs()">📂 LOAD</button>
     <button class="btn-about" onclick="toggleAbout()">ℹ ABOUT</button>
     <button class="btn-logout" onclick="logout()">🔒 LOGOUT</button>
+  </div>
+
+  <div class="control-group hidden" id="savedSongsPanel">
+    <label>Saved Songs</label>
+    <div class="song-list" id="songList"></div>
+    <button class="btn-clear" onclick="hideSongs()" style="margin-top:8px; min-width:100%;">Close</button>
   </div>
 
   <div class="status" id="status">Ready — Soprano type rawh, AUTO HARMONIZE click la, PLAY press rawh</div>
 
   <div class="about-panel" id="aboutPanel">
     <button class="close-btn" onclick="toggleAbout()">✕ Khar</button>
-    <h3>🎵 Track Siamna <span class="version-tag">v2.0</span></h3>
-    <p>Full band music generator - Piano, Bass, Drums.</p>
+    <h3>🎵 Track Siamna <span class="version-tag">v1.0</span></h3>
+    <p>Full band music generator for Soloists & Choirs — Piano, Guitar, Drums.</p>
 
     <h4>🎹 Hman Dan</h4>
     <ul>
-      <li><b>A solfa chhulut rawh</b> Soprano-ah: do.re.mi.fa.sol.la.ti</li>
+      <li><b>Solfa chhulut rawh</b> Soprano-ah: do.re.mi.fa.sol.la.ti</li>
+      <li><b>Chromatic notes:</b> di(1), ri(3), fi(6), si(8), li(10) — sharps; ra(1), me(3), se(6), le(8), te(10), ta(11) — flats</li>
       <li><b>Dot (.)</b> a inkarah hmang rawh</li>
       <li><b>Duration</b> bracket-ah: do(2) = half note, re(0.5) = eighth note, mi = quarter note</li>
       <li><b>AUTO HARMONIZE</b> click rawh — Alto, Tenor, Bass a inziak dawn</li>
-      <li><b>Key</b> thlan theih: C, G, F, D Major</li>
+      <li><b>Key</b> Major leh Minor thlan theih — 10 keys each</li>
+      <li><b>Time Signature</b> 4/4, 3/4, 6/8</li>
       <li><b>Tempo</b> 40-200 BPM</li>
-      <li><b>PLAY</b> click rawh</li>
+      <li><b>Volume</b> Piano, Guitar, Drums control theih</li>
+      <li><b>SAVE</b> click rawh — browser-ah save a ni</li>
+      <li><b>PLAY</b> click rawh — Intro + Full Band</li>
     </ul>
 
-    <h4>🎼 Auto-Harmonize Rules</h4>
+    <h4>🎼 Auto-Harmonize (Major)</h4>
     <ul>
-      <li><b>do</b> → I chord</li>
-      <li><b>re</b> → ii chord</li>
-      <li><b>mi</b> → I chord</li>
-      <li><b>fa</b> → IV chord</li>
-      <li><b>sol</b> → V chord</li>
-      <li><b>la</b> → vi chord</li>
-      <li><b>ti</b> → V chord</li>
+      <li><b>do</b> → I chord (do-mi-sol)</li>
+      <li><b>re</b> → ii chord (re-fa-la)</li>
+      <li><b>mi</b> → I chord (do-mi-sol)</li>
+      <li><b>fa</b> → IV chord (fa-la-do)</li>
+      <li><b>sol</b> → V chord (sol-ti-re)</li>
+      <li><b>la</b> → vi chord (la-do-mi)</li>
+      <li><b>ti</b> → V chord (sol-ti-re)</li>
+    </ul>
+
+    <h4>🎼 Auto-Harmonize (Minor)</h4>
+    <ul>
+      <li><b>do</b> → i chord (do-me-sol)</li>
+      <li><b>re</b> → ii° chord (re-fa-le)</li>
+      <li><b>me</b> → III chord (me-sol-ti)</li>
+      <li><b>fa</b> → iv chord (fa-le-do)</li>
+      <li><b>sol</b> → V chord (sol-ti-re)</li>
+      <li><b>le</b> → VI chord (le-do-me)</li>
+      <li><b>te</b> → VII chord (te-re-fa)</li>
+      <li><b>ti</b> → vii° chord (ti-re-fa)</li>
     </ul>
 
     <h4>⚙️ Technical</h4>
     <ul>
-      <li><b>Key:</b> C/G/F/D Major</li>
-      <li><b>Time:</b> 4/4</li>
-      <li><b>Instruments:</b> Piano + Bass + Drums</li>
+      <li><b>Keys:</b> 10 Major + 10 Minor</li>
+      <li><b>Time:</b> 4/4, 3/4, 6/8</li>
+      <li><b>Instruments:</b> Piano SATB + Rhythm Guitar + Drums</li>
+      <li><b>Intro:</b> 2-bar piano arpeggio</li>
     </ul>
 
     <h4>🆓 David Sailo</h4>
@@ -329,57 +509,181 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   </div>
 
   <div class="info">
-    Key: <span id="displayKey">C</span> Major | Time: 4/4 | Piano + Bass + Drums<br>
-    Notes: do.re.mi.fa.sol.la.ti | Duration: do(2).re(0.5).mi<br>
-    a in karah dot leh hawrawp tein, half note chu bracket in  </div>
+    Key: <span id="infoKey">C Major</span> | Time: <span id="infoTime">4/4</span> | Piano + Guitar + Drums<br>
+    Notes: do.di.re.ri.me.mi.fa.fi.se.sol.si.le.la.li.te.ti.ta | Duration: do(2).re(0.5).mi<br>
+    <span id="infoExtra">Intro ON | Master 90% | Piano 80% | Guitar 70% | Drums 60%</span>
+  </div>
 </div>
 
 <script>
-// ==================== VARIABLES (TOP) ====================
+// ==================== GLOBALS ====================
 let isPlaying = false;
 let audioCtx = null;
 let currentSong = null;
 let currentUser = null;
 let currentKey = "C";
+let currentKeyType = "major";
 
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5zYiosRlB4aHtq4N69fMUQNa09fY9mUqpBlPummZc6zW7bSWMG2u8PTxpOsfxfqY8/exec";
 
-// ==================== KEY MAPS ====================
-const KEY_MAPS = {
-  "C": {
-    name: "C Major",
-    notes: { 'do':0, 're':2, 'mi':4, 'fa':5, 'sol':7, 'la':9, 'ti':11 },
-    baseFreq: 261.63
+// ==================== UNIVERSAL SOLFA MAP ====================
+// All chromatic notes relative to tonic (do = 0)
+const SOLFA_MAP = {
+  'do': 0, 'di': 1, 'ra': 1,
+  're': 2, 'ri': 3, 'me': 3,
+  'mi': 4,
+  'fa': 5, 'fi': 6, 'se': 6,
+  'sol': 7, 'si': 8, 'le': 8,
+  'la': 9, 'li': 10, 'te': 10,
+  'ti': 11, 'ta': 11
+};
+
+// ==================== KEY DATA ====================
+const KEY_DATA = {
+  // Major keys
+  "C":  { name: "C Major",  baseFreq: 261.63, type: "major" },
+  "G":  { name: "G Major",  baseFreq: 392.00, type: "major" },
+  "D":  { name: "D Major",  baseFreq: 293.66, type: "major" },
+  "A":  { name: "A Major",  baseFreq: 440.00, type: "major" },
+  "E":  { name: "E Major",  baseFreq: 329.63, type: "major" },
+  "B":  { name: "B Major",  baseFreq: 493.88, type: "major" },
+  "F":  { name: "F Major",  baseFreq: 349.23, type: "major" },
+  "Bb": { name: "B♭ Major", baseFreq: 466.16, type: "major" },
+  "Eb": { name: "E♭ Major", baseFreq: 311.13, type: "major" },
+  "Ab": { name: "A♭ Major", baseFreq: 415.30, type: "major" },
+  // Minor keys
+  "Am": { name: "A Minor",  baseFreq: 220.00, type: "minor" },
+  "Em": { name: "E Minor",  baseFreq: 329.63, type: "minor" },
+  "Bm": { name: "B Minor",  baseFreq: 493.88, type: "minor" },
+  "F#m":{ name: "F♯ Minor", baseFreq: 369.99, type: "minor" },
+  "C#m":{ name: "C♯ Minor", baseFreq: 277.18, type: "minor" },
+  "G#m":{ name: "G♯ Minor", baseFreq: 415.30, type: "minor" },
+  "Dm": { name: "D Minor",  baseFreq: 293.66, type: "minor" },
+  "Gm": { name: "G Minor",  baseFreq: 392.00, type: "minor" },
+  "Cm": { name: "C Minor",  baseFreq: 261.63, type: "minor" },
+  "Fm": { name: "F Minor",  baseFreq: 349.23, type: "minor" }
+};
+
+// ==================== AUTO-HARMONY TABLES ====================
+const HARMONY_MAJOR = {
+  'do':  { a: 'mi',  t: 'sol', b: 'do' },   // I
+  're':  { a: 'fa',  t: 'la',  b: 're' },   // ii
+  'mi':  { a: 'sol', t: 'do',  b: 'do' },   // I (or iii)
+  'fa':  { a: 'la',  t: 'do',  b: 'fa' },   // IV
+  'sol': { a: 'ti',  t: 're',  b: 'sol' },  // V
+  'la':  { a: 'do',  t: 'mi',  b: 'la' },   // vi
+  'ti':  { a: 're',  t: 'sol', b: 'sol' },  // V (or vii°)
+  'di':  { a: 'fi',  t: 'la',  b: 'di' },   // near I
+  'ri':  { a: 'sol', t: 'ti',  b: 'ri' },   // near ii
+  'fi':  { a: 'la',  t: 'di',  b: 'fi' },   // near IV
+  'si':  { a: 'ti',  t: 'ri',  b: 'si' },   // near V
+  'li':  { a: 'di',  t: 'sol', b: 'li' },   // near vi
+  'ra':  { a: 'fa',  t: 'la',  b: 're' },   // same as re flat → ii
+  'me':  { a: 'sol', t: 'do',  b: 'do' },   // same as mi flat → I
+  'se':  { a: 'la',  t: 'do',  b: 'fa' },   // same as fi flat → IV
+  'le':  { a: 'do',  t: 'mi',  b: 'la' },   // same as si flat → vi
+  'te':  { a: 're',  t: 'sol', b: 'sol' },  // same as ti flat → V
+  'ta':  { a: 're',  t: 'sol', b: 'sol' }   // same as do flat → V
+};
+
+const HARMONY_MINOR = {
+  'do':  { a: 'me',  t: 'sol', b: 'do' },   // i
+  're':  { a: 'fa',  t: 'le',  b: 're' },   // ii°
+  'me':  { a: 'sol', t: 'ti',  b: 'me' },   // III
+  'fa':  { a: 'le',  t: 'do',  b: 'fa' },   // iv
+  'sol': { a: 'ti',  t: 're',  b: 'sol' },  // V
+  'le':  { a: 'do',  t: 'me',  b: 'le' },   // VI
+  'te':  { a: 're',  t: 'fa',  b: 'te' },   // VII
+  'ti':  { a: 're',  t: 'fa',  b: 'ti' },   // vii°
+  'di':  { a: 'fi',  t: 'la',  b: 'di' },
+  'ri':  { a: 'sol', t: 'te',  b: 'ri' },
+  'fi':  { a: 'le',  t: 'di',  b: 'fi' },
+  'si':  { a: 'te',  t: 'ri',  b: 'si' },
+  'li':  { a: 'di',  t: 'sol', b: 'li' },
+  'ra':  { a: 'fa',  t: 'le',  b: 're' },
+  'mi':  { a: 'sol', t: 'ti',  b: 'me' },   // mi in minor = raised 3rd → III
+  'se':  { a: 'le',  t: 'do',  b: 'fa' },
+  'la':  { a: 'do',  t: 'me',  b: 'le' },   // la in minor = raised 6th → VI
+  'ta':  { a: 're',  t: 'fa',  b: 'te' }    // ta in minor = same as te
+};
+
+// ==================== CHORD MAPS FOR GUITAR ====================
+const CHORD_MAJOR = {
+  'do':  ['do','mi','sol'], 'di':  ['di','fi','la'], 'ra':  ['ra','do','me'],
+  're':  ['re','fa','la'],  'ri':  ['ri','sol','ti'], 'me':  ['me','sol','ti'],
+  'mi':  ['mi','sol','ti'], 'fa':  ['fa','la','do'], 'fi':  ['fi','la','di'],
+  'se':  ['se','la','do'],  'sol': ['sol','ti','re'], 'si':  ['si','ti','ri'],
+  'le':  ['le','do','me'],  'la':  ['la','do','mi'], 'li':  ['li','di','sol'],
+  'te':  ['te','re','fa'],  'ti':  ['ti','re','fa'], 'ta':  ['ta','re','fa']
+};
+
+const CHORD_MINOR = {
+  'do':  ['do','me','sol'], 'di':  ['di','fi','la'], 'ra':  ['ra','do','me'],
+  're':  ['re','fa','le'],  'ri':  ['ri','sol','te'], 'me':  ['me','sol','ti'],
+  'mi':  ['mi','sol','ti'], 'fa':  ['fa','le','do'], 'fi':  ['fi','le','di'],
+  'se':  ['se','le','do'],  'sol': ['sol','ti','re'], 'si':  ['si','te','ri'],
+  'le':  ['le','do','me'],  'la':  ['la','do','me'], 'li':  ['li','di','sol'],
+  'te':  ['te','re','fa'],  'ti':  ['ti','re','fa'], 'ta':  ['ta','re','fa']
+};
+
+// ==================== DRUM PATTERNS ====================
+const DRUM_PATTERNS = {
+  '4/4': {
+    kick:  [0, 2],      // beats 1 and 3 (0-indexed)
+    snare: [1, 3],      // beats 2 and 4
+    hihat: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5]
   },
-  "G": {
-    name: "G Major",
-    notes: { 'do':7, 're':9, 'mi':11, 'fa':0, 'sol':2, 'la':4, 'ti':6 },
-    baseFreq: 392.00
+  '3/4': {
+    kick:  [0],         // beat 1 only (strong)
+    snare: [],          // no snare in waltz
+    hihat: [0, 1, 2]    // every beat
   },
-  "F": {
-    name: "F Major",
-    notes: { 'do':5, 're':7, 'mi':9, 'fa':10, 'sol':0, 'la':2, 'ti':4 },
-    baseFreq: 349.23
-  },
-  "D": {
-    name: "D Major",
-    notes: { 'do':2, 're':4, 'mi':6, 'fa':7, 'sol':9, 'la':11, 'ti':1 },
-    baseFreq: 293.66
+  '6/8': {
+    kick:  [0],         // beat 1 (first strong beat)
+    snare: [3],         // beat 4 (second strong beat)
+    hihat: [0, 1, 2, 3, 4, 5] // all 8th notes
   }
 };
 
+// ==================== UTILITY ====================
 function getFreq(note, octaveOffset, key) {
-  const keyData = KEY_MAPS[key] || KEY_MAPS["C"];
-  const semitone = keyData.notes[note];
+  const semitone = SOLFA_MAP[note];
   if (semitone === undefined) return null;
-  return keyData.baseFreq * Math.pow(2, semitone / 12) * Math.pow(2, octaveOffset);
+  const keyInfo = KEY_DATA[key];
+  if (!keyInfo) return null;
+  return keyInfo.baseFreq * Math.pow(2, semitone / 12) * Math.pow(2, octaveOffset);
 }
 
 function updateKey() {
-  currentKey = document.getElementById("keySelect").value;
-  document.getElementById("displayKey").textContent = currentKey;
-  setStatus("Key change to " + KEY_MAPS[currentKey].name + ". Play rawh.", "#4ecdc4");
+  const select = document.getElementById("keySelect");
+  currentKey = select.value;
+  currentKeyType = KEY_DATA[currentKey].type;
+  document.getElementById("displayKey").textContent = KEY_DATA[currentKey].name;
+  document.getElementById("infoKey").textContent = KEY_DATA[currentKey].name;
+  setStatus("Key: " + KEY_DATA[currentKey].name + ". Play rawh.", "#4ecdc4");
 }
+
+function updateInfo() {
+  const master = document.getElementById('volMaster').value;
+  const piano = document.getElementById('volPiano').value;
+  const guitar = document.getElementById('volGuitar').value;
+  const drums = document.getElementById('volDrums').value;
+  const intro = document.getElementById('introToggle').checked ? 'ON' : 'OFF';
+  document.getElementById('infoExtra').textContent = 
+    `Intro ${intro} | Master ${master}% | Piano ${piano}% | Guitar ${guitar}% | Drums ${drums}%`;
+}
+
+// Volume slider listeners
+['volMaster','volPiano','volGuitar','volDrums'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', function() {
+    document.getElementById('val' + id.charAt(3).toUpperCase() + id.slice(4)).textContent = this.value + '%';
+    updateInfo();
+  });
+});
+document.getElementById('introToggle')?.addEventListener('change', updateInfo);
+document.getElementById('timeSig')?.addEventListener('change', function() {
+  document.getElementById('infoTime').textContent = this.value;
+});
 
 // ==================== LOGIN ====================
 function doLogin() {
@@ -390,25 +694,12 @@ function doLogin() {
   const spinner = document.getElementById('loginSpinner');
   const btnText = document.getElementById('loginBtnText');
 
-  if (!email && !password) {
-    errorDiv.textContent = "❌ Email leh Password dah tel vek rawh.";
-    return;
-  }
-  if (!email) {
-    errorDiv.textContent = "❌ Email dah tel rawh.";
-    return;
-  }
-  if (!password) {
-    errorDiv.textContent = "❌ Password dah tel rawh.";
+  if (!email || !password) {
+    errorDiv.textContent = !email ? "❌ Email dah tel rawh." : "❌ Password dah tel rawh.";
     return;
   }
   if (!email.includes("@")) {
-    errorDiv.textContent = "❌ Email dik lo. @ tel vek rawh.";
-    return;
-  }
-
-  if (APPS_SCRIPT_URL === "PASTE_YOUR_APPS_SCRIPT_URL_HERE") {
-    errorDiv.textContent = "⚠️ Apps Script URL siam hrih lo. Developer-ah biak rawh.";
+    errorDiv.textContent = "❌ Email dik lo.";
     return;
   }
 
@@ -421,63 +712,39 @@ function doLogin() {
     method: 'POST',
     body: JSON.stringify({ email: email, password: password })
   })
-  .then(res => {
-    if (!res.ok) throw new Error("Network error: " + res.status);
-    return res.json();
-  })
+  .then(res => res.ok ? res.json() : Promise.reject("Network error: " + res.status))
   .then(data => {
     btn.disabled = false;
     spinner.classList.remove('show');
     btnText.textContent = "SIGN IN";
-
     if (data.success) {
       currentUser = { email: email, name: data.name };
       sessionStorage.setItem('churchUser', JSON.stringify(currentUser));
       showApp();
     } else {
-      if (data.message && data.message.includes("Invalid")) {
-        errorDiv.textContent = "❌ Email emaw password a dik lo. En rawh.";
-      } else if (data.message && data.message.includes("not approved")) {
-        errorDiv.textContent = "❌ I account approved a la ni lo. Admin-ah biak rawh.";
-      } else {
-        errorDiv.textContent = "❌ " + (data.message || "Login a hlawhchham.");
-      }
+      errorDiv.textContent = "❌ " + (data.message || "Login a hlawhchham.");
     }
   })
   .catch(err => {
     btn.disabled = false;
     spinner.classList.remove('show');
     btnText.textContent = "SIGN IN";
-
-    if (err.message.includes("Network")) {
-      errorDiv.textContent = "❌ Internet connection en rawh.";
-    } else if (err.message.includes("Failed to fetch")) {
-      errorDiv.textContent = "❌ Apps Script URL a hlawhchham. Developer-ah biak rawh.";
-    } else {
-      errorDiv.textContent = "❌ Thil dik lo a thleng: " + err.message;
-    }
-    console.error(err);
+    errorDiv.textContent = err.message?.includes("Failed") 
+      ? "❌ Internet connection emaw Apps Script URL en rawh." 
+      : "❌ " + err.message;
   });
 }
 
-// FIX: Allow Enter key to submit login form
 document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('loginPassword').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') doLogin();
-  });
-  document.getElementById('loginEmail').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      document.getElementById('loginPassword').focus();
-    }
-  });
+  document.getElementById('loginPassword')?.addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
+  document.getElementById('loginEmail')?.addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
+  updateInfo();
 });
 
 function showApp() {
   document.getElementById('loginOverlay').classList.add('hidden');
   document.getElementById('mainApp').classList.remove('hidden');
-  if (currentUser) {
-    document.getElementById('userTag').textContent = "👤 " + currentUser.name;
-  }
+  if (currentUser) document.getElementById('userTag').textContent = "👤 " + currentUser.name;
 }
 
 function logout() {
@@ -492,31 +759,23 @@ function logout() {
 }
 
 const saved = sessionStorage.getItem('churchUser');
-if (saved) {
-  currentUser = JSON.parse(saved);
-  showApp();
-}
+if (saved) { currentUser = JSON.parse(saved); showApp(); }
 
-// ==================== PARSE NOTES WITH DURATION ====================
-// Format: do.re.mi(2).fa.sol(0.5)
-// Plain note = 1 beat (quarter)
-// (2) = 2 beats (half), (0.5) = 0.5 beat (eighth), (4) = whole
+// ==================== PARSE NOTES ====================
 function parseVoiceWithDuration(str) {
   if (!str) return [];
   const notes = [];
   const tokens = str.toLowerCase().split('.');
-
   for (let token of tokens) {
     token = token.trim();
     if (!token) continue;
-
-    // Match: note name, optional (duration)
-    // do, do(2), do(0.5), re(4)
     const match = token.match(/^([a-z]+)(\(([0-9.]+)\))?$/);
     if (match) {
       const noteName = match[1];
       const duration = match[3] ? parseFloat(match[3]) : 1;
-      notes.push({ note: noteName, duration: duration });
+      if (SOLFA_MAP[noteName] !== undefined) {
+        notes.push({ note: noteName, duration: duration });
+      }
     }
   }
   return notes;
@@ -524,54 +783,40 @@ function parseVoiceWithDuration(str) {
 
 function validateNotes(notes) {
   for (let n of notes) {
-    if (KEY_MAPS[currentKey].notes[n.note] === undefined) return n.note;
+    if (SOLFA_MAP[n.note] === undefined) return n.note;
   }
   return null;
 }
 
 // ==================== AUTO HARMONY ====================
-const AUTO_HARMONY = {
-  'do':  { a: 'mi', t: 'sol', b: 'do' },
-  're':  { a: 'fa', t: 'la', b: 're' },
-  'mi':  { a: 'sol', t: 'do', b: 'do' },
-  'fa':  { a: 'la', t: 'do', b: 'fa' },
-  'sol': { a: 'ti', t: 're', b: 'sol' },
-  'la':  { a: 'do', t: 'mi', b: 'la' },
-  'ti':  { a: 're', t: 'sol', b: 'sol' },
-  "do'": { a: 'mi', t: 'sol', b: 'do' }
-};
-
 function autoHarmonize() {
   const sopNotes = parseVoiceWithDuration(document.getElementById('sop').value);
-
   if (sopNotes.length === 0) {
     setStatus('⚠ Soprano notes type hmasa phawt rawh.', 'orange');
     return;
   }
-
   const bad = validateNotes(sopNotes);
   if (bad) {
-    setStatus('⚠ Note "' + bad + '" a hriat theih lo. do.re.mi.fa.sol.la.ti hmang rawh.', 'orange');
+    setStatus('⚠ Note "' + bad + '" a hriat theih lo.', 'orange');
     return;
   }
 
+  const table = currentKeyType === 'minor' ? HARMONY_MINOR : HARMONY_MAJOR;
   const alt = [], ten = [], bas = [];
   for (let item of sopNotes) {
-    const h = AUTO_HARMONY[item.note] || AUTO_HARMONY['do'];
+    const h = table[item.note] || table['do'];
     const durStr = item.duration !== 1 ? '(' + item.duration + ')' : '';
     alt.push(h.a + durStr);
     ten.push(h.t + durStr);
     bas.push(h.b + durStr);
   }
-
   document.getElementById('alt').value = alt.join('.');
   document.getElementById('ten').value = ten.join('.');
   document.getElementById('bas').value = bas.join('.');
-
   setStatus('✓ Auto-harmonize a zo! I duh chuan edit thei.', '#4ecdc4');
 }
 
-// ==================== DRUMS ====================
+// ==================== AUDIO: DRUMS ====================
 function playKick(time, gainNode) {
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
@@ -590,7 +835,6 @@ function playSnare(time, gainNode) {
   const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
   const data = buffer.getChannelData(0);
   for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-
   const noise = audioCtx.createBufferSource();
   noise.buffer = buffer;
   const noiseFilter = audioCtx.createBiquadFilter();
@@ -602,7 +846,6 @@ function playSnare(time, gainNode) {
   noise.connect(noiseFilter);
   noiseFilter.connect(noiseGain);
   noiseGain.connect(gainNode);
-
   const osc = audioCtx.createOscillator();
   const oscGain = audioCtx.createGain();
   osc.type = 'triangle';
@@ -611,7 +854,6 @@ function playSnare(time, gainNode) {
   oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
   osc.connect(oscGain);
   oscGain.connect(gainNode);
-
   noise.start(time);
   noise.stop(time + 0.2);
   osc.start(time);
@@ -623,7 +865,6 @@ function playHiHat(time, gainNode) {
   const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
   const data = buffer.getChannelData(0);
   for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-
   const noise = audioCtx.createBufferSource();
   noise.buffer = buffer;
   const filter = audioCtx.createBiquadFilter();
@@ -639,37 +880,106 @@ function playHiHat(time, gainNode) {
   noise.stop(time + 0.05);
 }
 
-function playBassNote(freq, start, dur, gainNode) {
+// ==================== AUDIO: GUITAR STRUM ====================
+function playGuitarStrum(chordNotes, startTime, duration, volume, pattern) {
+  if (!chordNotes || chordNotes.length === 0) return;
+  const strumDelay = 0.018; // 18ms between strings
+  const maxDelay = (chordNotes.length - 1) * strumDelay;
+
+  chordNotes.forEach((freq, index) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+
+    filter.type = 'lowpass';
+    filter.frequency.value = 1800;
+    filter.Q.value = 0.7;
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(guitarGain);
+
+    const noteStart = startTime + (index * strumDelay);
+    const noteDur = duration * 0.75;
+
+    // Envelope: quick attack, slight sustain, release
+    gain.gain.setValueAtTime(0, noteStart);
+    gain.gain.linearRampToValueAtTime(volume * 0.2, noteStart + 0.008);
+    gain.gain.setValueAtTime(volume * 0.18, noteStart + 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.001, noteStart + noteDur);
+
+    osc.start(noteStart);
+    osc.stop(noteStart + noteDur);
+  });
+}
+
+function getChordNotes(sopranoNote, key, keyType) {
+  const chordMap = keyType === 'minor' ? CHORD_MINOR : CHORD_MAJOR;
+  const chordSolfa = chordMap[sopranoNote] || chordMap['do'];
+  return chordSolfa.map(n => getFreq(n, -1, key)).filter(f => f !== null);
+}
+
+// ==================== AUDIO: PIANO NOTE ====================
+function playPianoNote(freq, start, dur, volume, type) {
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
-  const filter = audioCtx.createBiquadFilter();
-  osc.type = 'sawtooth';
+  osc.connect(gain);
+  gain.connect(pianoGain);
+  osc.type = type || 'triangle';
   osc.frequency.value = freq;
-  filter.type = 'lowpass';
-  filter.frequency.value = 800;
-  osc.connect(filter);
-  filter.connect(gain);
-  gain.connect(gainNode);
   gain.gain.setValueAtTime(0, start);
-  gain.gain.linearRampToValueAtTime(0.25, start + 0.01);
-  gain.gain.setValueAtTime(0.25, start + 0.1);
+  gain.gain.linearRampToValueAtTime(volume, start + 0.005);
+  gain.gain.exponentialRampToValueAtTime(volume * 0.3, start + 0.15);
   gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
   osc.start(start);
   osc.stop(start + dur);
 }
 
+// ==================== INTRO ====================
+function playIntro(now, key, keyType, bpm, beatTime) {
+  const introBars = 2;
+  const pattern = [0, 2, 4, 7, 4, 2, 0, 2]; // Tonic arpeggio do-mi-sol-do-sol-mi-do-mi
+  const totalBeats = introBars * 4;
+
+  for (let bar = 0; bar < introBars; bar++) {
+    for (let i = 0; i < 4; i++) {
+      const beatIndex = (bar * 4) + i;
+      const semitone = pattern[i % pattern.length];
+      const freq = KEY_DATA[key].baseFreq * Math.pow(2, semitone / 12);
+      const start = now + (beatIndex * beatTime);
+      const dur = beatTime * 0.9;
+
+      // Right hand (melody)
+      playPianoNote(freq * 2, start, dur, 0.12, 'triangle');
+      // Left hand (bass tonic)
+      playPianoNote(KEY_DATA[key].baseFreq * 0.5, start, dur * 1.2, 0.08, 'sine');
+    }
+  }
+  return introBars * 4 * beatTime;
+}
+
 // ==================== MAIN PLAY ====================
+let pianoGain, guitarGain, drumsGain, masterGain;
+
 function playMusic() {
   if (isPlaying) stopMusic();
 
   const bpm = parseInt(document.getElementById('tempo').value) || 90;
   const beatTime = 60 / bpm;
+  const timeSig = document.getElementById('timeSig').value;
+  const withIntro = document.getElementById('introToggle').checked;
+  const volMasterVal = document.getElementById('volMaster').value / 100;
+  const volPianoVal = document.getElementById('volPiano').value / 100;
+  const volGuitarVal = document.getElementById('volGuitar').value / 100;
+  const volDrumsVal = document.getElementById('volDrums').value / 100;
 
   const sop = parseVoiceWithDuration(document.getElementById('sop').value);
   const alt = parseVoiceWithDuration(document.getElementById('alt').value);
   const ten = parseVoiceWithDuration(document.getElementById('ten').value);
   const bas = parseVoiceWithDuration(document.getElementById('bas').value);
-
   const voices = [sop, alt, ten, bas];
   const lengths = voices.map(v => v.length);
 
@@ -681,7 +991,6 @@ function playMusic() {
     setStatus('⚠ Note zat vek a ni tur. Soprano/Alto/Tenor/Bass vek in.', 'orange');
     return;
   }
-
   for (let i = 0; i < 4; i++) {
     const bad = validateNotes(voices[i]);
     if (bad) {
@@ -690,96 +999,130 @@ function playMusic() {
     }
   }
 
-  // FIX: Create AudioContext and handle mobile suspended state
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-  // FIX: Resume AudioContext if suspended (required for mobile browsers)
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-
+  if (audioCtx.state === 'suspended') audioCtx.resume();
   const now = audioCtx.currentTime;
 
-  let totalDuration = 0;
-  for (let item of sop) {
-    totalDuration += item.duration * beatTime;
-  }
-
-  currentSong = { bpm: bpm, key: currentKey, sop: sop, alt: alt, ten: ten, bas: bas, created: new Date().toLocaleString() };
-
-  const masterGain = audioCtx.createGain();
-  masterGain.gain.value = 0.9;
+  // Create gain nodes for mixing
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = volMasterVal;
   masterGain.connect(audioCtx.destination);
 
-  // PIANO (SATB)
+  pianoGain = audioCtx.createGain();
+  pianoGain.gain.value = volPianoVal;
+  pianoGain.connect(masterGain);
+
+  guitarGain = audioCtx.createGain();
+  guitarGain.gain.value = volGuitarVal;
+  guitarGain.connect(masterGain);
+
+  drumsGain = audioCtx.createGain();
+  drumsGain.gain.value = volDrumsVal;
+  drumsGain.connect(masterGain);
+
+  let songStart = now;
+  let introDuration = 0;
+
+  // Play intro if enabled
+  if (withIntro) {
+    introDuration = playIntro(now, currentKey, currentKeyType, bpm, beatTime);
+    songStart = now + introDuration;
+  }
+
+  // Calculate total song duration
+  let songDuration = 0;
+  for (let item of sop) songDuration += item.duration * beatTime;
+  const totalDuration = introDuration + songDuration;
+
+  currentSong = {
+    bpm, key: currentKey, keyType: currentKeyType, timeSig,
+    sop, alt, ten, bas,
+    withIntro, volMaster: volMasterVal, volPiano: volPianoVal,
+    volGuitar: volGuitarVal, volDrums: volDrumsVal,
+    created: new Date().toLocaleString()
+  };
+
+  // ===== PIANO (SATB) =====
   const pianoWaves = ['triangle', 'sawtooth', 'triangle', 'sawtooth'];
-  const pianoVolumes = [0.08, 0.06, 0.06, 0.08];
+  const pianoVolumes = [0.1, 0.07, 0.07, 0.09];
   const octaveOffsets = [1, 0, -1, -2];
 
   for (let v = 0; v < 4; v++) {
     const voiceNotes = voices[v];
-    let currentTime = now;
+    let currentTime = songStart;
     for (let i = 0; i < voiceNotes.length; i++) {
       const item = voiceNotes[i];
       const freq = getFreq(item.note, octaveOffsets[v], currentKey);
       if (!freq) continue;
-
       const dur = item.duration * beatTime * 0.85;
-      const start = currentTime;
-
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(masterGain);
-
-      osc.type = pianoWaves[v];
-      osc.frequency.value = freq;
-
-      gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(pianoVolumes[v], start + 0.005);
-      gain.gain.exponentialRampToValueAtTime(pianoVolumes[v] * 0.3, start + 0.15);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
-
-      osc.start(start);
-      osc.stop(start + dur);
-
+      playPianoNote(freq, currentTime, dur, pianoVolumes[v], pianoWaves[v]);
       currentTime += item.duration * beatTime;
     }
   }
 
-  // BASS GUITAR
-  let bassTime = now;
-  for (let i = 0; i < sop.length; i++) {
-    const item = sop[i];
-    const rootFreq = getFreq(item.note, -2, currentKey);
-    if (rootFreq) {
-      const dur = item.duration * beatTime * 0.9;
-      playBassNote(rootFreq * 0.5, bassTime, dur, masterGain);
-    }
-    bassTime += item.duration * beatTime;
-  }
-
-  // DRUMS
-  let drumTime = now;
+  // ===== GUITAR STRUMMING =====
+  const pattern = DRUM_PATTERNS[timeSig] || DRUM_PATTERNS['4/4'];
+  let guitarTime = songStart;
   let beatCount = 0;
+
   for (let i = 0; i < sop.length; i++) {
     const item = sop[i];
     const noteBeats = item.duration;
     const noteDuration = noteBeats * beatTime;
-
     let beatInNote = 0;
+
+    while (beatInNote < noteBeats) {
+      const beatStart = guitarTime + (beatInNote * beatTime);
+      const beatInBar = beatCount % (timeSig === '6/8' ? 6 : (timeSig === '3/4' ? 3 : 4));
+
+      // Strum on strong beats
+      const isStrongBeat = timeSig === '4/4' ? (beatInBar === 0 || beatInBar === 2) :
+                           timeSig === '3/4' ? (beatInBar === 0) :
+                           (beatInBar === 0 || beatInBar === 3);
+
+      if (isStrongBeat) {
+        const chordNotes = getChordNotes(item.note, currentKey, currentKeyType);
+        const strumVol = volGuitarVal * 0.25;
+        playGuitarStrum(chordNotes, beatStart, beatTime, strumVol);
+      }
+
+      beatCount++;
+      beatInNote++;
+    }
+    guitarTime += noteDuration;
+  }
+
+  // ===== DRUMS =====
+  let drumTime = songStart;
+  beatCount = 0;
+
+  for (let i = 0; i < sop.length; i++) {
+    const item = sop[i];
+    const noteBeats = item.duration;
+    const noteDuration = noteBeats * beatTime;
+    let beatInNote = 0;
+    const beatsPerBar = timeSig === '6/8' ? 6 : (timeSig === '3/4' ? 3 : 4);
+
     while (beatInNote < noteBeats) {
       const beatStart = drumTime + (beatInNote * beatTime);
-      const beatInBar = beatCount % 4;
+      const beatInBar = beatCount % beatsPerBar;
 
-      if (beatInBar === 0 || beatInBar === 2) {
-        playKick(beatStart, masterGain);
+      // Kick
+      if (pattern.kick.includes(beatInBar)) {
+        playKick(beatStart, drumsGain);
       }
-      if (beatInBar === 2) {
-        playSnare(beatStart, masterGain);
+      // Snare
+      if (pattern.snare.includes(beatInBar)) {
+        playSnare(beatStart, drumsGain);
       }
-      playHiHat(beatStart, masterGain);
-      playHiHat(beatStart + beatTime * 0.5, masterGain);
+      // Hi-hat
+      if (pattern.hihat.includes(beatInBar)) {
+        playHiHat(beatStart, drumsGain);
+      }
+      // Off-beat hi-hat for 4/4
+      if (timeSig === '4/4' && pattern.hihat.includes(beatInBar + 0.5)) {
+        playHiHat(beatStart + beatTime * 0.5, drumsGain);
+      }
 
       beatCount++;
       beatInNote++;
@@ -790,9 +1133,11 @@ function playMusic() {
   isPlaying = true;
   document.getElementById('btnPlay').disabled = true;
   document.getElementById('btnStop').disabled = false;
-  setStatus('▶ ' + KEY_MAPS[currentKey].name + ' ah ' + sop.length + ' notes, Full Band, ' + bpm + ' BPM...', '#4ecdc4');
+  const introText = withIntro ? 'Intro + ' : '';
+  setStatus('▶ ' + introText + KEY_DATA[currentKey].name + ', ' + sop.length + ' notes, ' + bpm + ' BPM, ' + timeSig + '...', '#4ecdc4');
+  sendToMIT('PLAYING:' + currentKey + ':' + bpm);
 
-  setTimeout(function() { if (isPlaying) stopMusic(); }, totalDuration * 1000 + 200);
+  setTimeout(() => { if (isPlaying) stopMusic(); }, totalDuration * 1000 + 500);
 }
 
 function stopMusic() {
@@ -800,6 +1145,7 @@ function stopMusic() {
   document.getElementById('btnPlay').disabled = false;
   document.getElementById('btnStop').disabled = true;
   setStatus('⏹ A tawk. Ready.', '#aaa');
+  sendToMIT('STOPPED');
   if (audioCtx) {
     try { audioCtx.close(); } catch(e) {}
     audioCtx = null;
@@ -812,49 +1158,129 @@ function setStatus(msg, color) {
   s.style.color = color || '#f0f0f0';
 }
 
-// ==================== SAVE ====================
-function saveNotes() {
-  if (!currentSong) {
-    setStatus('⚠ Play hmasa phawt rawh, chuan save thei ang.', 'orange');
+function sendToMIT(msg) {
+  if (window.AppInventor && window.AppInventor.setWebViewString) {
+    window.AppInventor.setWebViewString(msg);
+  }
+}
+
+// ==================== SAVE / LOAD SONGS ====================
+function saveSong() {
+  const sop = document.getElementById('sop').value;
+  if (!sop.trim()) {
+    setStatus('⚠ Soprano notes type hmasa phawt rawh.', 'orange');
     return;
   }
+  const name = prompt('Hming dah rawh (e.g., Hla 1):');
+  if (!name) return;
 
-  function formatNotes(notes) {
-    return notes.map(function(n) { return n.note + (n.duration !== 1 ? '(' + n.duration + ')' : ''); }).join('.');
+  const song = {
+    name: name,
+    key: currentKey,
+    tempo: document.getElementById('tempo').value,
+    timeSig: document.getElementById('timeSig').value,
+    sop: sop,
+    alt: document.getElementById('alt').value,
+    ten: document.getElementById('ten').value,
+    bas: document.getElementById('bas').value,
+    withIntro: document.getElementById('introToggle').checked,
+    date: new Date().toLocaleDateString()
+  };
+
+  let songs = JSON.parse(localStorage.getItem('trackSiamnaSongs') || '[]');
+  songs.push(song);
+  localStorage.setItem('trackSiamnaSongs', JSON.stringify(songs));
+  setStatus('✓ "' + name + '" save a zo! LOAD-ah en rawh.', '#27ae60');
+}
+
+function showSongs() {
+  const panel = document.getElementById('savedSongsPanel');
+  const list = document.getElementById('songList');
+  const songs = JSON.parse(localStorage.getItem('trackSiamnaSongs') || '[]');
+
+  if (songs.length === 0) {
+    list.innerHTML = '<div style="color:#888; text-align:center; padding:10px;">Save la awm lo. SAVE click rawh.</div>';
+  } else {
+    list.innerHTML = songs.map((s, i) => `
+      <div class="song-item">
+        <div>
+          <span>${s.name}</span><br>
+          <small>${s.key} | ${s.timeSig} | ${s.tempo} BPM | ${s.date}</small>
+        </div>
+        <div class="song-actions">
+          <button class="preset-btn" onclick="loadSong(${i})">Load</button>
+          <button class="btn-del" onclick="deleteSong(${i})">Del</button>
+        </div>
+      </div>
+    `).join('');
   }
+  panel.classList.remove('hidden');
+}
 
-  // FIX: Use template literal (backticks) instead of single quotes for multi-line string
-  const text = `Music COMPOSITION
-=======================
-Siam: ${currentSong.created}
+function hideSongs() {
+  document.getElementById('savedSongsPanel').classList.add('hidden');
+}
+
+function loadSong(index) {
+  const songs = JSON.parse(localStorage.getItem('trackSiamnaSongs') || '[]');
+  const s = songs[index];
+  if (!s) return;
+
+  document.getElementById('keySelect').value = s.key;
+  document.getElementById('tempo').value = s.tempo;
+  document.getElementById('timeSig').value = s.timeSig;
+  document.getElementById('sop').value = s.sop;
+  document.getElementById('alt').value = s.alt;
+  document.getElementById('ten').value = s.ten;
+  document.getElementById('bas').value = s.bas;
+  document.getElementById('introToggle').checked = s.withIntro !== false;
+
+  updateKey();
+  updateInfo();
+  hideSongs();
+  setStatus('✓ "' + s.name + '" load a zo!', '#4ecdc4');
+}
+
+function deleteSong(index) {
+  if (!confirm('Delete tiak em?')) return;
+  let songs = JSON.parse(localStorage.getItem('trackSiamnaSongs') || '[]');
+  songs.splice(index, 1);
+  localStorage.setItem('trackSiamnaSongs', JSON.stringify(songs));
+  showSongs();
+}
+
+// ==================== EXPORT TEXT (legacy) ====================
+function saveNotes() {
+  if (!currentSong) {
+    setStatus('⚠ Play hmasa phawt rawh.', 'orange');
+    return;
+  }
+  function fmt(notes) {
+    return notes.map(n => n.note + (n.duration !== 1 ? '(' + n.duration + ')' : '')).join('.');
+  }
+  const text = `Track Siamna Composition
+=========================
+Date: ${currentSong.created}
 Tempo: ${currentSong.bpm} BPM
-Key: ${KEY_MAPS[currentSong.key].name}
-Vuak: 4/4
-Instruments: Piano + Bass Guitar + Drums
+Key: ${KEY_DATA[currentSong.key].name}
+Time: ${currentSong.timeSig}
+Intro: ${currentSong.withIntro ? 'Yes' : 'No'}
 
-SOPRANO: ${formatNotes(currentSong.sop)}
-ALTO:    ${formatNotes(currentSong.alt)}
-TENOR:   ${formatNotes(currentSong.ten)}
-BASS:    ${formatNotes(currentSong.bas)}
+SOPRANO: ${fmt(currentSong.sop)}
+ALTO:    ${fmt(currentSong.alt)}
+TENOR:   ${fmt(currentSong.ten)}
+BASS:    ${fmt(currentSong.bas)}
 
-AUTO-HARMONIZE KALPHUNG:
-do  -> I chord  (Alto:mi, Tenor:sol, Bass:do)
-re  -> ii chord (Alto:fa, Tenor:la, Bass:re)
-mi  -> I chord  (Alto:sol, Tenor:do, Bass:do)
-fa  -> IV chord (Alto:la, Tenor:do, Bass:fa)
-sol -> V chord  (Alto:ti, Tenor:re, Bass:sol)
-la  -> vi chord (Alto:do, Tenor:mi, Bass:la)
-ti  -> V chord  (Alto:re, Tenor:sol, Bass:sol)
+Volume: Master ${Math.round(currentSong.volMaster*100)}%, Piano ${Math.round(currentSong.volPiano*100)}%, Guitar ${Math.round(currentSong.volGuitar*100)}%, Drums ${Math.round(currentSong.volDrums*100)}%
 
 Hman dan:
 1. MuseScore ah (musescore.org)
-2. ${KEY_MAPS[currentSong.key].name} in
+2. ${KEY_DATA[currentSong.key].name} in
 3. Music Notes ang khian
 4. Tempo chu ${currentSong.bpm} BPM
 5. MP3 emaw print sheet music in
 `;
-
-  const blob = new Blob([text], {type: 'text/plain'});
+  const blob = new Blob([text], {type:'text/plain'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -863,38 +1289,45 @@ Hman dan:
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  setStatus('✓ Save a zo! Downloads folder-ah en rawh.', '#27ae60');
+  setStatus('✓ Text file save a zo!', '#27ae60');
 }
 
 // ==================== PRESETS ====================
 const PRESETS = {
   'scale': {
-    sop: 'do.re.mi.fa.sol.fa.mi.re.do',
-    alt: 'do.mi.do.la.do.la.do.ti.do',
-    ten: 'sol.do.sol.fa.mi.fa.sol.sol.do',
-    bas: 'do.sol.do.fa.do.fa.do.sol.do'
+    key: 'C', timeSig: '4/4', tempo: 90,
+    sop: 'do.re.mi.fa.sol.la.ti.do', alt: 'do.mi.sol.do.sol.mi.do.do',
+    ten: 'sol.do.mi.sol.do.mi.sol.sol', bas: 'do.sol.do.fa.do.mi.do.sol'
   },
   'hymn': {
-    sop: 'sol.do.re.mi.re.do.ti.do',
-    alt: 'do.mi.do.la.do.la.sol.do',
-    ten: 'sol.sol.fa.do.fa.fa.re.sol',
-    bas: 'do.do.fa.fa.do.la.do.sol'
+    key: 'G', timeSig: '4/4', tempo: 70,
+    sop: 'sol.do.re.mi.re.do.ti.do', alt: 'sol.mi.do.sol.do.la.sol.do',
+    ten: 'sol.sol.mi.do.re.fa.mi.sol', bas: 'do.do.sol.mi.re.re.do.sol'
   },
   'joy': {
-    sop: 'do.re.mi.sol.sol.la.sol.fa.mi.re.do',
-    alt: 'do.do.mi.mi.do.fa.mi.re.do.ti.do',
-    ten: 'sol.sol.do.do.sol.do.do.sol.sol.sol.do',
-    bas: 'do.sol.do.mi.do.fa.do.sol.do.sol.do'
+    key: 'D', timeSig: '4/4', tempo: 120,
+    sop: 'do.re.mi.fa.sol.sol.la.sol.fa.mi.re.do', alt: 'do.do.mi.mi.do.fa.mi.re.do.ti.do',
+    ten: 'sol.sol.do.do.sol.do.do.sol.sol.sol.do', bas: 'do.sol.do.mi.do.fa.do.sol.do.sol.do'
+  },
+  'minor': {
+    key: 'Am', timeSig: '4/4', tempo: 80,
+    sop: 'la.ti.do.re.me.fa.sol.la', alt: 'la.do.me.la.me.do.la.la',
+    ten: 'me.sol.do.me.sol.do.me.me', bas: 'la.me.la.re.la.do.la.me'
   }
 };
 
 function loadPreset(name) {
   const p = PRESETS[name];
   if (!p) return;
+  document.getElementById('keySelect').value = p.key;
+  document.getElementById('timeSig').value = p.timeSig;
+  document.getElementById('tempo').value = p.tempo;
   document.getElementById('sop').value = p.sop;
   document.getElementById('alt').value = p.alt;
   document.getElementById('ten').value = p.ten;
   document.getElementById('bas').value = p.bas;
+  updateKey();
+  updateInfo();
   setStatus('"' + name + '" preset load a zo. PLAY press rawh.', '#ffd700');
 }
 
@@ -907,8 +1340,7 @@ function clearAll() {
 }
 
 function toggleAbout() {
-  const panel = document.getElementById('aboutPanel');
-  panel.classList.toggle('show');
+  document.getElementById('aboutPanel').classList.toggle('show');
 }
 </script>
 </body>
